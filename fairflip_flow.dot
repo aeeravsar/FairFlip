@@ -1,0 +1,84 @@
+digraph FairFlipCrypto {
+    // Settings
+    rankdir=TB;
+    bgcolor="white";
+    fontname="Courier";
+    node [shape=box, style="filled", fontname="Courier", fontsize=10];
+    edge [fontname="Courier", fontsize=9];
+    
+    // Title
+    title [label="FairFlip Technical Flow", shape=none, fontsize=14, fontweight=bold];
+    
+    // Player A flow
+    subgraph cluster_playerA {
+        label="Player A";
+        style=filled;
+        fillcolor="#E3F2FD";
+        
+        secretA [label="secretA = random(32 bytes)\nExample: 0x1a2b3c...", shape=ellipse, fillcolor="#BBDEFB"];
+        commitA [label="commitA = keccak256(secretA)\nExample: 0x7f8e9d...", fillcolor="#90CAF9"];
+        submitA [label="Submit to Contract:\n• commitA\n• 100 USDT bet", fillcolor="#64B5F6"];
+    }
+    
+    // Player B flow
+    subgraph cluster_playerB {
+        label="Player B";
+        style=filled;
+        fillcolor="#F3E5F5";
+        
+        secretB [label="secretB = random(32 bytes)\nExample: 0x4d5e6f...", shape=ellipse, fillcolor="#E1BEE7"];
+        commitB [label="commitB = keccak256(secretB)\nExample: 0x2c3d4e...", fillcolor="#CE93D8"];
+        submitB [label="Submit to Contract:\n• commitB\n• 100 USDT bet", fillcolor="#BA68C8"];
+    }
+    
+    // Contract processing
+    subgraph cluster_contract {
+        label="Smart Contract";
+        style=filled;
+        fillcolor="#E8F5E9";
+        fontweight=bold;
+        
+        store [label="Store Commitments:\n• commits[A] = commitA\n• commits[B] = commitB\n• Lock 200 USDT total", fillcolor="#C8E6C9"];
+        
+        verify [label="Verify Reveals:\n✓ keccak256(secretA) == commitA\n✓ keccak256(secretB) == commitB", shape=diamond, fillcolor="#A5D6A7"];
+        
+        xor [label="XOR Secrets:\ncombined = secretA ⊕ secretB\nExample: 0x1a2b3c... ⊕ 0x4d5e6f...\n        = 0x577553...", fillcolor="#81C784"];
+        
+        hash [label="Generate Seed:\nseed = keccak256(combined)\nExample: 0x8f7a6b...", fillcolor="#66BB6A"];
+        
+        winner [label="Select Winner:\nindex = seed % 2\n0 → Player A wins\n1 → Player B wins", shape=diamond, fillcolor="#4CAF50", fontcolor="white"];
+        
+        payout [label="Transfer 200 USDT\nto Winner", shape=ellipse, fillcolor="#388E3C", fontcolor="white"];
+    }
+    
+    // Flow
+    title -> secretA [style=invis];
+    title -> secretB [style=invis];
+    
+    secretA -> commitA [label="keccak256"];
+    commitA -> submitA;
+    
+    secretB -> commitB [label="keccak256"];
+    commitB -> submitB;
+    
+    submitA -> store;
+    submitB -> store;
+    
+    store -> verify [label="Reveal Phase"];
+    verify -> xor [label="Valid"];
+    xor -> hash;
+    hash -> winner;
+    winner -> payout;
+    
+    // Reveal inputs
+    revealA [label="Player A reveals:\nsecretA", shape=none, fillcolor="#E3F2FD"];
+    revealB [label="Player B reveals:\nsecretB", shape=none, fillcolor="#F3E5F5"];
+    
+    revealA -> verify [style=dashed];
+    revealB -> verify [style=dashed];
+    
+    // Properties box
+    properties [label="Properties:\n• Verifiable on-chain\n• No external randomness needed\n• Committing truly random values is\n  the optimal strategy → ensures fairness", shape=note, fillcolor="#FFF9C4"];
+    
+    winner -> properties [style=invis];
+}
